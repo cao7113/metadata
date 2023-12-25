@@ -3,7 +3,11 @@ import _ from "lodash";
 import { normalizeLink } from "../parsers/onchain";
 
 export const getProvider = (chainId) => {
-  const network = _.upperCase(supportedChains[chainId]).replace(" ", "_");
+  // const network = _.upperCase(supportedChains[chainId]).replace(" ", "_");
+  // x1-testnet ==> X_1_TESTNET 
+  const network =  _.upperCase(supportedChains[chainId]).replaceAll(" ", "_");
+
+  console.log(`[debug] get provider network: ${network} for chainId=${chainId}`);
   return new providers.JsonRpcProvider(process.env[`RPC_URL_${network}`]);
 };
 

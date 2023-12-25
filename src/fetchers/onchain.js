@@ -96,7 +96,9 @@ const encodeTokenERC1155 = (token) => {
 };
 
 const getNetwork = (chainId) => {
-  return _.upperCase(supportedChains[chainId]).replace(" ", "_");
+  // x1-testnet ==> X_1_TESTNET
+  // return _.upperCase(supportedChains[chainId]).replace(" ", "_");
+  return _.upperCase(supportedChains[chainId]).replaceAll(" ", "_");
 };
 
 const getContractName = async (contractAddress, rpcURL) => {
@@ -245,6 +247,7 @@ const getTokenMetadataFromURI = async (uri) => {
 export const fetchTokens = async (chainId, tokens) => {
   // TODO: Add support for other chains via RPC_URL
   const network = getNetwork(chainId);
+  console.log(`[debug] get network: ${network} for chainId=${chainId}`);
 
   if (tokens.length === 0) return [];
   if (!Array.isArray(tokens)) tokens = [tokens];
