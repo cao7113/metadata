@@ -192,6 +192,7 @@ const api = async (req, res) => {
 
         metadata = [...metadata, ...newMetadata];
       } catch (error) {
+        console.log(`fetchTokens failed with error: ${JSON.stringify(error, null, 2)}`);
         if (error instanceof RequestWasThrottledError) {
           return res.status(429).json({ error: error.message, expires_in: error.delay });
         }
