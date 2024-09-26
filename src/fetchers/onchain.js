@@ -7,7 +7,8 @@ import _ from "lodash";
 import { logger } from "../shared/logger";
 import { normalizeMetadata } from "../shared/utils";
 
-const FETCH_TIMEOUT = 30000;
+// const FETCH_TIMEOUT = 30000;
+const FETCH_TIMEOUT = 300000;
 
 const erc721Interface = new ethers.utils.Interface([
   "function supportsInterface(bytes4 interfaceId) view returns (bool)",
@@ -96,7 +97,9 @@ const encodeTokenERC1155 = (token) => {
 };
 
 const getNetwork = (chainId) => {
-  return _.upperCase(supportedChains[chainId]).replace(" ", "_");
+  // x1-testnet ==> X_1_TESTNET
+  // return _.upperCase(supportedChains[chainId]).replace(" ", "_");
+  return _.upperCase(supportedChains[chainId]).replaceAll(" ", "_");
 };
 
 const getContractName = async (contractAddress, rpcURL) => {
@@ -110,6 +113,14 @@ const getContractName = async (contractAddress, rpcURL) => {
     const name = await contract.name();
     return name;
   } catch (e) {
+    logger.warn(
+      "onchain-fetcher",
+      `getContractName error ${JSON.stringify(
+        e,
+        null,
+        2
+      )} contractAddress: ${contractAddress} rpcURL: ${rpcURL}`
+    );
     return null;
   }
 };
@@ -124,6 +135,11 @@ const getCollectionMetadata = async (contractAddress, rpcURL) => {
     );
     let uri = await contract.contractURI();
     uri = normalizeLink(uri);
+
+    logger.info(
+      "onchain-fetcher",
+      `getCollectionMetadata getCollectionMetadata get on-chain contractURI: ${uri} contractAddress: ${contractAddress} rpcURL: ${rpcURL}`
+    );
 
     const isDataUri = uri.startsWith("data:application/json;base64,");
     if (isDataUri) {
@@ -144,6 +160,14 @@ const getCollectionMetadata = async (contractAddress, rpcURL) => {
 
     return json;
   } catch (e) {
+    logger.warn(
+      "onchain-fetcher",
+      `getCollectionMetadata error ${JSON.stringify(
+        e,
+        null,
+        2
+      )} contractAddress: ${contractAddress} rpcURL: ${rpcURL}`
+    );
     return null;
   }
 };
@@ -205,6 +229,10 @@ const getTokenMetadataFromURI = async (uri) => {
   try {
     if (uri.includes("ipfs://")) {
       uri = uri.replace("ipfs://", "https://ipfs.io/ipfs/");
+      // fix too often ipfs gateway timeout
+      // console.log(`gateway: ${process.env[`IPFS_GATEWAY_BASE_URL`]}`);
+      // const ipfs_gatateway = process.env[`IPFS_GATEWAY_BASE_URL`] || "https://ipfs.io/ipfs/";
+      // uri = uri.replace("ipfs://", ipfs_gatateway);
     }
 
     const isDataUri = uri.startsWith("data:application/json;base64,");
@@ -221,10 +249,13 @@ const getTokenMetadataFromURI = async (uri) => {
       return [null, `Invalid URI: ${uri}`];
     }
 
+    logger.info("onchain-fetcher", `getTokenMetadataFromURI uri: ${uri}`);
     const response = await fetch(uri, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
+        "user-agent":
+          "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
       },
       timeout: FETCH_TIMEOUT,
       // TODO: add proxy support to avoid rate limiting
@@ -238,6 +269,10 @@ const getTokenMetadataFromURI = async (uri) => {
     const json = await response.json();
     return [json, null];
   } catch (e) {
+    logger.error(
+      "onchain-fetcher",
+      `getTokenMetadataFromURI error ${JSON.stringify(e, null, 2)} for uri: ${uri}`
+    );
     return [null, e];
   }
 };
@@ -324,18 +359,19 @@ export const fetchTokens = async (chainId, tokens) => {
           };
         }
 
+        logger.info("onchain-fetcher", `fetchTokens uri: ${uri}`);
         const [metadata, error] = await getTokenMetadataFromURI(uri);
         if (error) {
-          // logger.error(
-          //   "onchain-fetcher",
-          //   JSON.stringify({
-          //     message: "fetchTokens getTokenMetadataFromURI error",
-          //     chainId,
-          //     token,
-          //     error,
-          //     uri,
-          //   })
-          // );
+          logger.error(
+            "onchain-fetcher",
+            JSON.stringify({
+              message: "fetchTokens getTokenMetadataFromURI error",
+              chainId,
+              token,
+              error,
+              uri,
+            })
+          );
 
           if (error === 429) {
             throw new RequestWasThrottledError(error.message, 10);

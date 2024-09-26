@@ -18,6 +18,13 @@ You can start editing the page by modifying `pages/index.js`. The page auto-upda
 
 The `pages/api` directory is mapped to `/api/*`. Files in this directory are treated as [API routes](https://nextjs.org/docs/api-routes/introduction) instead of React pages.
 
+### Setup
+
+```
+mv .env.example .env
+vi .env
+```
+
 ## Adding custom metadata
 
 To add custom metadata and/or extend the default metadata for a collection, create a directory in `src/extend` containing an `index.js` file (See [src/extend/forgotten-ponies/index.js](src/extend/forgotten-ponies/index.js) for example). Example directory structure:
@@ -42,8 +49,3 @@ extend["${CHAIN_ID},${YOUR_CONTRACT}"] = myContract;
 ### Testing
 
 You can test the custom metadata response at `http://localhost:3000/api/v4/mainnet/metadata/token?method=opensea&token=YOUR_CONTRACT:TOKEN_ID`
-
-
-
-
-

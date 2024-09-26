@@ -1,0 +1,23 @@
+# https://taskfile.dev
+version: "3"
+tasks:
+  i: yarn install
+  build: yarn build
+  dev: yarn dev
+  # start all service in this monorepo project
+  # 启动项目，主要是packages/indexer 的jobs和api服务
+  start: yarn start
+  run: yarn start
+  fmt: yarn format
+
+  # pm2 start as root user indexer root dir # --no-daemon
+  pm2-start: pm2 start asdf --name "indexer-metadata" --interpreter bash -- exec yarn start
+  # pm2 delete <id>
+
+  try: curl "http://127.0.0.1:3000/api/test/erc721/123" | jq
+  # curl "http://127.0.0.1:3000/api/v4/x1-testnet/metadata/collection?method=onchain&token=0xb9dcc0aed41a30b81d380acba495533b2f94973f:921" | jq
+  # http://localhost:3000/api/v4/mainnet/metadata/token?method=opensea&token=YOUR_CONTRACT:TOKEN_ID
+  # http://localhost:3000/api/hello
+
+  meta: curl "http://localhost:3000/api/v4/x1-testnet/metadata/collection?method=onchain&token=0x4B8763334Fee8e52d604342e69f968D06E7eAec0:1"
+  meta-token: curl "http://localhost:3000/api/v4/x1-testnet/metadata/token?method=onchain&token=0x4B8763334Fee8e52d604342e69f968D06E7eAec0:1"
